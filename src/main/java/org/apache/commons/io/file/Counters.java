@@ -155,13 +155,13 @@ public class Counters {
         }
 
         @Override
-        public String toString() {
-            return value.toString();
+        public void reset() {
+            value = BigInteger.ZERO;
         }
 
         @Override
-        public void reset() {
-            value = BigInteger.ZERO;
+        public String toString() {
+            return value.toString();
         }
     }
 
@@ -277,13 +277,13 @@ public class Counters {
         }
 
         @Override
-        public String toString() {
-            return Long.toString(value);
+        public void reset() {
+            value = 0L;
         }
 
         @Override
-        public void reset() {
-            value = 0L;
+        public String toString() {
+            return Long.toString(value);
         }
     }
 
@@ -331,6 +331,17 @@ public class Counters {
         @Override
         public void increment() {
             // noop
+        }
+
+        /**
+         * Returns {@code "0"}, always.
+         *
+         * @return {@code "0"}, always.
+         * @since 2.12.0
+         */
+        @Override
+        public String toString() {
+            return "0";
         }
 
     }

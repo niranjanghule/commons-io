@@ -36,7 +36,7 @@ import org.apache.commons.io.FilenameUtils;
  * <p>
  * The wildcard matcher uses the characters '?' and '*' to represent a
  * single or multiple wildcard characters.
- * This is the same as often found on Dos/Unix command lines.
+ * This is the same as often found on DOS/Unix command lines.
  * The extension check is case-sensitive.
  * See {@link FilenameUtils#wildcardMatch(String, String)} for more information.
  * </p>
@@ -85,7 +85,7 @@ public class WildcardFilter extends AbstractFileFilter implements Serializable {
     private final String[] wildcards;
 
     /**
-     * Construct a new case-sensitive wildcard filter for a list of wildcards.
+     * Constructs a new case-sensitive wildcard filter for a list of wildcards.
      *
      * @param wildcards  the list of wildcards to match
      * @throws IllegalArgumentException if the pattern list is null
@@ -97,7 +97,7 @@ public class WildcardFilter extends AbstractFileFilter implements Serializable {
     }
 
     /**
-     * Construct a new case-sensitive wildcard filter for a single wildcard.
+     * Constructs a new case-sensitive wildcard filter for a single wildcard.
      *
      * @param wildcard  the wildcard to match
      * @throws IllegalArgumentException if the pattern is null
@@ -108,7 +108,7 @@ public class WildcardFilter extends AbstractFileFilter implements Serializable {
     }
 
     /**
-     * Construct a new case-sensitive wildcard filter for an array of wildcards.
+     * Constructs a new case-sensitive wildcard filter for an array of wildcards.
      *
      * @param wildcards  the array of wildcards to match
      * @throws IllegalArgumentException if the pattern array is null
@@ -141,28 +141,6 @@ public class WildcardFilter extends AbstractFileFilter implements Serializable {
 
     /**
      * Checks to see if the file name matches one of the wildcards.
-     * @param file the file to check
-     *
-     * @return true if the file name matches one of the wildcards
-     * @since 2.9.0
-     */
-    @Override
-    public FileVisitResult accept(final Path file, final BasicFileAttributes attributes) {
-        if (Files.isDirectory(file)) {
-            return FileVisitResult.TERMINATE;
-        }
-
-        for (final String wildcard : wildcards) {
-            if (FilenameUtils.wildcardMatch(Objects.toString(file.getFileName(), null), wildcard)) {
-                return FileVisitResult.CONTINUE;
-            }
-        }
-
-        return FileVisitResult.TERMINATE;
-    }
-
-    /**
-     * Checks to see if the file name matches one of the wildcards.
      *
      * @param dir  the file directory
      * @param name  the file name
@@ -181,6 +159,28 @@ public class WildcardFilter extends AbstractFileFilter implements Serializable {
         }
 
         return false;
+    }
+
+    /**
+     * Checks to see if the file name matches one of the wildcards.
+     * @param file the file to check
+     *
+     * @return true if the file name matches one of the wildcards
+     * @since 2.9.0
+     */
+    @Override
+    public FileVisitResult accept(final Path file, final BasicFileAttributes attributes) {
+        if (Files.isDirectory(file)) {
+            return FileVisitResult.TERMINATE;
+        }
+
+        for (final String wildcard : wildcards) {
+            if (FilenameUtils.wildcardMatch(Objects.toString(file.getFileName(), null), wildcard)) {
+                return FileVisitResult.CONTINUE;
+            }
+        }
+
+        return FileVisitResult.TERMINATE;
     }
 
 }

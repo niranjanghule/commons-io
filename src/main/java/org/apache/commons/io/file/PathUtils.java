@@ -79,10 +79,6 @@ import org.apache.commons.io.filefilter.IOFileFilter;
  */
 public final class PathUtils {
 
-    private static final OpenOption[] OPEN_OPTIONS_TRUNCATE = new OpenOption[] {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING};
-
-    private static final OpenOption[] OPEN_OPTIONS_APPEND = new OpenOption[] {StandardOpenOption.CREATE, StandardOpenOption.APPEND};
-
     /**
      * Private worker/holder that computes and tracks relative path names and their equality. We reuse the sorted relative
      * lists when comparing directories.
@@ -144,6 +140,10 @@ public final class PathUtils {
             relativeFileList2 = tmpRelativeFileList2;
         }
     }
+
+    private static final OpenOption[] OPEN_OPTIONS_TRUNCATE = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING};
+
+    private static final OpenOption[] OPEN_OPTIONS_APPEND = {StandardOpenOption.CREATE, StandardOpenOption.APPEND};
 
     /**
      * Empty {@link CopyOption} array.
@@ -1154,24 +1154,30 @@ public final class PathUtils {
         final List<Exception> causeList = new ArrayList<>(2);
         final DosFileAttributeView fileAttributeView = Files.getFileAttributeView(path, DosFileAttributeView.class, linkOptions);
         if (fileAttributeView != null) {
+            // Windows 10
             try {
                 fileAttributeView.setReadOnly(readOnly);
                 return path;
             } catch (final IOException e) {
-                // ignore for now, retry with PosixFileAttributeView
+                // Remember and retry with PosixFileAttributeView
                 causeList.add(e);
             }
         }
         final PosixFileAttributeView posixFileAttributeView = Files.getFileAttributeView(path, PosixFileAttributeView.class, linkOptions);
         if (posixFileAttributeView != null) {
-            // Works on Windows but not on Ubuntu:
-            // Files.setAttribute(path, "unix:readonly", readOnly, options);
-            // java.lang.IllegalArgumentException: 'unix:readonly' not recognized
+            // Not Windows 10
             final PosixFileAttributes readAttributes = posixFileAttributeView.readAttributes();
             final Set<PosixFilePermission> permissions = readAttributes.permissions();
-            permissions.remove(PosixFilePermission.OWNER_WRITE);
-            permissions.remove(PosixFilePermission.GROUP_WRITE);
-            permissions.remove(PosixFilePermission.OTHERS_WRITE);
+            permissions.add(PosixFilePermission.OWNER_READ);
+            permissions.add(PosixFilePermission.GROUP_READ);
+            permissions.add(PosixFilePermission.OTHERS_READ);
+            List<PosixFilePermission> writePermissions = Arrays.asList(PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE,
+                PosixFilePermission.OTHERS_WRITE);
+            if (readOnly) {
+                permissions.removeAll(writePermissions);
+            } else {
+                permissions.addAll(writePermissions);
+            }
             try {
                 return Files.setPosixFilePermissions(path, permissions);
             } catch (final IOException e) {
@@ -1389,6 +1395,26 @@ public final class PathUtils {
         final FileVisitOption... options) throws IOException {
         return Files.walk(start, maxDepth, options)
             .filter(path -> pathFilter.accept(path, readAttributes ? readBasicFileAttributesUnchecked(path) : null) == FileVisitResult.CONTINUE);
+    }
+
+    /**
+     * Writes the given character sequence to a file at the given path.
+     *
+     * @param path The target file.
+     * @param charSequence The character sequence text.
+     * @param charset The Charset to encode the text.
+     * @param openOptions options How to open the file.
+     * @return The given path.
+     * @throws IOException if an I/O error occurs writing to or creating the file.
+     * @since 2.12.0
+     */
+    public static Path writeString(final Path path, final CharSequence charSequence, final Charset charset, final OpenOption... openOptions)
+        throws IOException {
+        // Check the text is not null before opening file.
+        Objects.requireNonNull(path, "path");
+        Objects.requireNonNull(charSequence, "charSequence");
+        Files.write(path, String.valueOf(charSequence).getBytes(Charsets.toCharset(charset)), openOptions);
+        return path;
     }
 
     /**

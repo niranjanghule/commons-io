@@ -155,6 +155,9 @@ public class FileUtilsTest {
      */
     private static final ListDirectoryWalker LIST_WALKER = new ListDirectoryWalker();
 
+    /**
+     * The test temporary folder managed by JUnit.
+     */
     @TempDir
     public File temporaryFolder;
 
@@ -1473,8 +1476,6 @@ public class FileUtilsTest {
         assertFalse(testDirectory.exists(), "TestDirectory must not exist");
     }
 
-    // forceDelete
-
     @Test
     public void testForceDeleteReadOnlyFile() throws Exception {
         File destination = File.createTempFile("test-", ".txt");
@@ -1668,11 +1669,7 @@ public class FileUtilsTest {
         }
 
         do {
-            try {
-                TestUtils.sleep(1000);
-            } catch (final InterruptedException ie) {
-                // ignore
-            }
+            TestUtils.sleepQuietly(1000);
             if (!reference.getParentFile().exists()) {
                 throw new IOException("Cannot create file " + reference
                         + " as the parent directory does not exist");
@@ -1920,6 +1917,19 @@ public class FileUtilsTest {
     }
 
     @Test
+    public void testIterateFilesOnlyNoDirs() throws IOException {
+        final File directory = temporaryFolder;
+        assertTrue(new File(directory, "TEST").mkdir());
+        assertTrue(new File(directory, "test.txt").createNewFile());
+
+        final IOFileFilter filter = new WildcardFileFilter("*", IOCase.INSENSITIVE);
+        for (final Iterator<File> itFiles = FileUtils.iterateFiles(directory, filter, null); itFiles.hasNext();) {
+            final File file = itFiles.next();
+            assertFalse(file.isDirectory(), () -> file.getAbsolutePath());
+        }
+    }
+
+    @Test
     public void testListFiles() throws Exception {
         final File srcDir = temporaryFolder;
         final File subDir = new File(srcDir, "list_test");
@@ -1944,8 +1954,7 @@ public class FileUtilsTest {
                 }
             }
 
-            final Collection<File> actualFiles = FileUtils.listFiles(subDir, new WildcardFileFilter("*.*"),
-                new WildcardFileFilter("*"));
+            final Collection<File> actualFiles = FileUtils.listFiles(subDir, new WildcardFileFilter("*.*"), new WildcardFileFilter("*"));
 
             final int count = actualFiles.size();
             final Object[] fileObjs = actualFiles.toArray();
@@ -1967,6 +1976,18 @@ public class FileUtilsTest {
             assertEquals(foundFileNames.size(), expectedFileNames.length, () -> foundFileNames.toString());
         } finally {
             subDir.delete();
+        }
+    }
+
+    @Test
+    public void testListFilesOnlyNoDirs() throws IOException {
+        final File directory = temporaryFolder;
+        assertTrue(new File(directory, "TEST").mkdir());
+        assertTrue(new File(directory, "test.txt").createNewFile());
+
+        final IOFileFilter filter = new WildcardFileFilter("*", IOCase.INSENSITIVE);
+        for (final File file : FileUtils.listFiles(directory, filter, null)) {
+            assertFalse(file.isDirectory(), () -> file.getAbsolutePath());
         }
     }
 

@@ -25,10 +25,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.Set;
 
 import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -178,8 +180,7 @@ private boolean isAvailabilityTestableForCharset(final String csName) {
         final char[] inputChars = { (char) 0xE0, (char) 0xB2, (char) 0xA0 };
         final Charset charset = Charset.forName(csName); // infinite loop for US-ASCII, UTF-8 OK
         try (InputStream stream = new CharSequenceInputStream(new String(inputChars), charset, 512)) {
-            while (stream.read() != -1) {
-            }
+            IOUtils.toCharArray(stream, charset);
         }
     }
 
@@ -264,12 +265,14 @@ private boolean isAvailabilityTestableForCharset(final String csName) {
 
     @Test
     public void testIO_356_Loop_UTF16() throws Exception {
-        testIO_356_Loop("UTF-16", 4);
+        final Charset charset = StandardCharsets.UTF_16;
+        testIO_356_Loop(charset.displayName(), (int) ReaderInputStream.minBufferSize(charset.newEncoder()));
     }
 
     @Test
     public void testIO_356_Loop_UTF8() throws Exception {
-        testIO_356_Loop("UTF-8", 4);
+        final Charset charset = StandardCharsets.UTF_8;
+        testIO_356_Loop(charset.displayName(), (int) ReaderInputStream.minBufferSize(charset.newEncoder()));
     }
 
     @Test

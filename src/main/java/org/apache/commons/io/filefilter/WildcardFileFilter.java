@@ -36,7 +36,7 @@ import org.apache.commons.io.IOCase;
  * <p>
  * The wildcard matcher uses the characters '?' and '*' to represent a
  * single or multiple wildcard characters.
- * This is the same as often found on Dos/Unix command lines.
+ * This is the same as often found on DOS/Unix command lines.
  * The check is case-sensitive by default.
  * See {@link FilenameUtils#wildcardMatchOnSystem(String,String)} for more information.
  * </p>
@@ -85,7 +85,7 @@ public class WildcardFileFilter extends AbstractFileFilter implements Serializab
     private final IOCase ioCase;
 
     /**
-     * Construct a new case-sensitive wildcard filter for a list of wildcards.
+     * Constructs a new case-sensitive wildcard filter for a list of wildcards.
      *
      * @param wildcards  the list of wildcards to match, not null
      * @throws IllegalArgumentException if the pattern list is null
@@ -96,7 +96,7 @@ public class WildcardFileFilter extends AbstractFileFilter implements Serializab
     }
 
     /**
-     * Construct a new wildcard filter for a list of wildcards specifying case-sensitivity.
+     * Constructs a new wildcard filter for a list of wildcards specifying case-sensitivity.
      *
      * @param wildcards  the list of wildcards to match, not null
      * @param ioCase  how to handle case sensitivity, null means case-sensitive
@@ -110,7 +110,7 @@ public class WildcardFileFilter extends AbstractFileFilter implements Serializab
     }
 
     /**
-     * Construct a new case-sensitive wildcard filter for a single wildcard.
+     * Constructs a new case-sensitive wildcard filter for a single wildcard.
      *
      * @param wildcard  the wildcard to match
      * @throws IllegalArgumentException if the pattern is null
@@ -120,8 +120,7 @@ public class WildcardFileFilter extends AbstractFileFilter implements Serializab
     }
 
     /**
-     * Construct a new case-sensitive wildcard filter for an array of wildcards.
-     * <p>
+     * Constructs a new case-sensitive wildcard filter for an array of wildcards.
      *
      * @param wildcards  the array of wildcards to match
      * @throws IllegalArgumentException if the pattern array is null
@@ -131,7 +130,7 @@ public class WildcardFileFilter extends AbstractFileFilter implements Serializab
     }
 
     /**
-     * Construct a new wildcard filter for a single wildcard specifying case-sensitivity.
+     * Constructs a new wildcard filter for a single wildcard specifying case-sensitivity.
      *
      * @param wildcard  the wildcard to match, not null
      * @param ioCase  how to handle case sensitivity, null means case-sensitive
@@ -144,7 +143,7 @@ public class WildcardFileFilter extends AbstractFileFilter implements Serializab
     }
 
     /**
-     * Construct a new wildcard filter for an array of wildcards specifying case-sensitivity.
+     * Constructs a new wildcard filter for an array of wildcards specifying case-sensitivity.
      *
      * @param wildcards  the array of wildcards to match, not null
      * @param ioCase  how to handle case sensitivity, null means case-sensitive

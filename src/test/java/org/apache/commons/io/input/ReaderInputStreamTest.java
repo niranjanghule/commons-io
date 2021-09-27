@@ -17,16 +17,24 @@
 package org.apache.commons.io.input;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class ReaderInputStreamTest {
     private static final String TEST_STRING = "\u00e0 peine arriv\u00e9s nous entr\u00e2mes dans sa chambre";
@@ -34,7 +42,7 @@ public class ReaderInputStreamTest {
 
     static {
         final StringBuilder buffer = new StringBuilder();
-        for (int i=0; i<100; i++) {
+        for (int i = 0; i < 100; i++) {
             buffer.append(TEST_STRING);
         }
         LARGE_TEST_STRING = buffer.toString();
@@ -42,18 +50,48 @@ public class ReaderInputStreamTest {
 
     private final Random random = new Random();
 
+    @Test
+    public void testBufferTooSmall() throws IOException {
+        assertThrows(IllegalArgumentException.class, () -> new ReaderInputStream(new StringReader("\uD800"), StandardCharsets.UTF_8, -1));
+        assertThrows(IllegalArgumentException.class, () -> new ReaderInputStream(new StringReader("\uD800"), StandardCharsets.UTF_8, 0));
+        assertThrows(IllegalArgumentException.class, () -> new ReaderInputStream(new StringReader("\uD800"), StandardCharsets.UTF_8, 1));
+    }
+    
+    @Test
+    @Timeout(value = 500, unit = TimeUnit.MILLISECONDS)
+    public void testBufferSmallest() throws IOException {
+        final Charset charset = StandardCharsets.UTF_8;
+        try (InputStream in = new ReaderInputStream(new StringReader("\uD800"), charset, (int) ReaderInputStream.minBufferSize(charset.newEncoder()))) {
+            in.read();
+        }
+    }
+    
     /*
      * Tests https://issues.apache.org/jira/browse/IO-277
      */
     @Test
     public void testCharsetMismatchInfiniteLoop() throws IOException {
         // Input is UTF-8 bytes: 0xE0 0xB2 0xA0
-        final char[] inputChars = { (char) 0xE0, (char) 0xB2, (char) 0xA0 };
+        final char[] inputChars = {(char) 0xE0, (char) 0xB2, (char) 0xA0};
         // Charset charset = Charset.forName("UTF-8"); // works
         final Charset charset = StandardCharsets.US_ASCII; // infinite loop
         try (ReaderInputStream stream = new ReaderInputStream(new CharArrayReader(inputChars), charset)) {
-            while (stream.read() != -1) {
-            }
+            IOUtils.toCharArray(stream, charset);
+        }
+    }
+
+    /**
+     * Tests IO-717 to avoid infinite loops.
+     *
+     * ReaderInputStream does not throw exception with {@link CodingErrorAction#REPORT}.
+     */
+    @Test
+    @Timeout(value = 500, unit = TimeUnit.MILLISECONDS)
+    public void testCodingErrorAction() throws IOException {
+        final Charset charset = StandardCharsets.UTF_8;
+        CharsetEncoder encoder = charset.newEncoder().onMalformedInput(CodingErrorAction.REPORT);
+        try (InputStream in = new ReaderInputStream(new StringReader("\uD800aa"), encoder, (int) ReaderInputStream.minBufferSize(charset.newEncoder()))) {
+            assertThrows(CharacterCodingException.class, in::read);
         }
     }
 
